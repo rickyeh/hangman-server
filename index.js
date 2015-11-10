@@ -14,5 +14,5 @@ function handleRequest(req, res) {
 
 var server = http.createServer(handleRequest);
 
-server.listen(listenPort);
+server.listen(process.env.PORT || listenPort);
 console.log('Server running at localhost:' + listenPort);
