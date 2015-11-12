@@ -1,36 +1,38 @@
-var http = require('http');
-var url = require('url');
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 
 var listenPort = 12345;
 
-// function handleRequest(req, res) {
-//     if (req.method === 'GET') {
-//         res.write('Get Received');
-//         res.end();
-//     } else {
-//         res.write('Oops!  Something went wrong!');
-//         res.end();
-//     }
-// }
+// Dummy Puzzle for now
+var puzzle = {
+        game_key: '1',
+        phrase: 'all your base are belong to us',
+        state: 'alive',
+        num_tries_left: 5
+    }
+;
 
-// var server = http.createServer(handleRequest);
+// BodyParser
 
-// server.listen(process.env.PORT || listenPort);
+app.use(bodyParser.urlencoded({ extended: false}));
+app.use(bodyParser.json());
 
-// app.use(bodyParser.urlencoded({ extended: false}));
+app.use(function(req, res) {
+    var obj = req.body;
+    var email = obj.email;
+    var response = {};
 
-// app.use(bodyParser.json());
+    response = puzzle;
 
-// app.use(function(req, res) {
-//     console.log('app used');
-//     console.log(JSON.stringify(req.body));
-//     res.setHeader('Content-Type', 'text/plain');
-//     res.write('you posted: \n');
-//     res.end(JSON.stringify(req.body, null, 2));
-// })
+    console.log('Body Parser Used');
+    console.log(JSON.stringify(req.body));
+
+    res.setHeader('Content-Type', 'text/plain');
+
+    res.end(JSON.stringify(response));
+    // res.end(JSON.stringify(req.body, null, 2));
+})
 
 
 app.get('/', function(req, res) {
@@ -38,14 +40,11 @@ app.get('/', function(req, res) {
     console.log('get received');
 });
 
-app.get('/game', function(req, res) {
-    res.send('get message received');
-    console.log('get received');
-});
 
 app.post('/', function(req, res) {
-    res.send('post message received');
+    res.send('POST received');
     res.send(req.body)
+    console.log(req.body);
     console.log('Post received');
 })
 
