@@ -3,7 +3,8 @@ var app = express();
 var bodyParser = require('body-parser');
 var rand = require('generate-key');
 
-var listenPort = 12345;
+const listenPort = 12345;
+const num_lives = 5;
 
 // Dictionary
 var dictionary = ['macbook', 'surface'];
@@ -42,22 +43,18 @@ app.post('/', function(req, res) {
     console.log();
     console.log('New Game requested received with email: ' + req.body.email);
     console.log('Key generated : ' + newGame.game_key);
-
-    var response = {
-        game_key: '',
-        phrase: '',
-        state: '',
-        num_tries_left: 0
-    };
-
     console.log('Game Database is currently:');
     printDatabase();
 
+    var response = {
+        game_key: newGame.game_key,
+        phrase: maskPhrase(newGame.puzzle),
+        state: 'alive',
+        num_tries_left: num_lives
+    };
 
     // res.setHeader('Content-Type', 'text/plain');
-    // res.end(JSON.stringify(response));
-
-
+    res.end(JSON.stringify(response));
     // res.end(JSON.stringify(req.body, null, 2));
 })
 
@@ -65,6 +62,24 @@ function printDatabase() {
     for (var k in gameDatabase) {
         console.log(k + ' - ' + gameDatabase[k].puzzle);
     }
+}
+
+// Function takes a phrase, and returns the phrase masked except for guessed letters
+function maskPhrase(phrase, guessedLetters) {
+    var result = '';
+
+    for (var i = 0; i < phrase.length; i++) {
+
+        var code = phrase[i].charCodeAt(0);
+
+        // If it is a valid letter
+        if ( ((code >= 65) && (code <= 90)) || ((code >= 97) && (code <= 122)) ) {
+            result += '_';
+        }
+    }
+
+    // console.log('returned phrase - ' + result);
+    return result;
 }
 
 app.listen(process.env.PORT || listenPort);
