@@ -7,22 +7,12 @@ const listenPort = 12345;
 const num_lives = 5;
 
 // Dictionary
-var dictionary = ['macbook', 'surface'];
+var dictionary = ['macbook', 'surface', 'where is the love'];
 
 // Object to hold ongoing games
 var gameDatabase = {};
 
-// Dummy Puzzle for now
-var puzzle = {
-        game_key: '1',
-        phrase: 'all your base are belong to us',
-        state: 'alive',
-        num_tries_left: 5
-    }
-;
-
 // BodyParser
-
 app.use(bodyParser.json());
 
 app.get('/', function(req, res) {
@@ -30,13 +20,15 @@ app.get('/', function(req, res) {
     console.log('get received');
 });
 
-// Post received to root - New Game Generation
+// Post received to root
+// New Game Generation
 app.post('/', function(req, res) {
     var newGame = {};
     newGame.game_key = rand.generateKey();
     newGame.puzzle = dictionary[0]; // Random word here later
     newGame.num_tries_left = 5;
     newGame.state = 'alive';
+    newGame.guessedLetters = [' ']; // Include spaces so mask function will ignore
 
     gameDatabase[newGame.game_key] = newGame;
 
@@ -48,15 +40,53 @@ app.post('/', function(req, res) {
 
     var response = {
         game_key: newGame.game_key,
-        phrase: maskPhrase(newGame.puzzle),
+        phrase: maskPhrase(newGame.puzzle, newGame.guessedLetters),
         state: 'alive',
         num_tries_left: num_lives
     };
 
-    // res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Type', 'text/plain');
     res.end(JSON.stringify(response));
-    // res.end(JSON.stringify(req.body, null, 2));
-})
+});
+
+// Post received at URL /game_key
+// Resume an existing game
+app.post('/:id', function(req, res) {
+    console.log(req.params.id);
+    console.log();
+    console.log('Letter Guessed: ' + req.body.guess);
+
+    // Looks up the game based on the key provided by the id parameter in URL
+    var currentGame = gameDatabase[req.params.id];
+
+    // Guesses the letter
+    currentGame = guessLetter(req.body.guess, currentGame);
+
+    // Add logic for result of guesses, victory, loss, etc...
+
+    // Build response obj
+    var response = {
+        game_key: currentGame.game_key,
+        phrase: maskPhrase(currentGame.puzzle, currentGame.guessedLetters),
+        state: currentGame.state,
+        num_tries_left: currentGame.num_tries_left
+    };
+
+    res.setHeader('Content-Type', 'text/plain');
+    res.end(JSON.stringify(response));
+
+});
+
+function guessLetter(letter, gameObj) {
+    if (gameObj.puzzle.indexOf(letter) > -1) { // Found match
+        gameObj.guessedLetters.push(letter);
+    } else {
+        gameObj.num_tries_left--;
+        gameObj.guessedLetters.push(letter);
+    }
+
+    return gameObj;
+}
 
 function printDatabase() {
     for (var k in gameDatabase) {
@@ -66,21 +96,30 @@ function printDatabase() {
 
 // Function takes a phrase, and returns the phrase masked except for guessed letters
 function maskPhrase(phrase, guessedLetters) {
-    var result = '';
+    // Split string into array of characters
+    phrase = phrase.split('');
 
-    for (var i = 0; i < phrase.length; i++) {
-
-        var code = phrase[i].charCodeAt(0);
-
-        // If it is a valid letter
-        if ( ((code >= 65) && (code <= 90)) || ((code >= 97) && (code <= 122)) ) {
-            result += '_';
+    var maskedArray = phrase.map(function(currLetter) {
+        if (hasMatch(currLetter, guessedLetters)) { // If char matches a guessed letter
+            return currLetter;
+        } else { // Else return an underscore to mask
+            return '_';
         }
-    }
+    });
 
-    // console.log('returned phrase - ' + result);
-    return result;
+    return maskedArray.join('');
 }
 
+// Helper function used to detect whether a letter exists in an array of letters
+function hasMatch(letter, guessedLetters) {
+    for (var i = 0; i < guessedLetters.length; i++) {
+        if (guessedLetters[i] === letter) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Start the server
 app.listen(process.env.PORT || listenPort);
 console.log('Server running at localhost:' + listenPort);
