@@ -62,8 +62,6 @@ app.post('/:id', function(req, res) {
     // Guesses the letter
     currentGame = guessLetter(req.body.guess, currentGame);
 
-    // Add logic for result of guesses, victory, loss, etc...
-
     // Build response obj
     var response = {
         game_key: currentGame.game_key,
@@ -72,11 +70,20 @@ app.post('/:id', function(req, res) {
         num_tries_left: currentGame.num_tries_left
     };
 
+    // Add logic for result of guesses, victory, loss, etc...
+    if (currentGame.num_tries_left < 0) {
+        response.state = 'lost';
+    } else if (currentGame.puzzle === response.phrase) {
+        response.state = 'won';
+    }
+    
+
     res.setHeader('Content-Type', 'text/plain');
     res.end(JSON.stringify(response));
 
 });
 
+// Function that checks a letter against the puzzle.
 function guessLetter(letter, gameObj) {
     if (gameObj.puzzle.indexOf(letter) > -1) { // Found match
         gameObj.guessedLetters.push(letter);
@@ -88,6 +95,7 @@ function guessLetter(letter, gameObj) {
     return gameObj;
 }
 
+// Function that prints the database of current games.  Used for troubleshooting/debugging
 function printDatabase() {
     for (var k in gameDatabase) {
         console.log(k + ' - ' + gameDatabase[k].puzzle);
