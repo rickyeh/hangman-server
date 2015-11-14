@@ -1,16 +1,24 @@
 var express = require('express');
 var app = express();
+var fs = require('fs');
 var bodyParser = require('body-parser');
 var rand = require('generate-key');
 
 const listenPort = 12345;
 const num_lives = 5;
 
-// Dictionary
-var dictionary = ['macbook', 'surface', 'where is the love'];
 
 // Object to hold ongoing games
 var gameDatabase = {};
+
+// Dictionary - Read from file
+var dictionary = [];
+
+fs.readFile('dictionary.txt', 'utf8', function(err, data) {
+    dictionary = data.split('\n');
+});
+
+// dictionary = ["what's up"];
 
 // BodyParser
 app.use(bodyParser.json());
@@ -25,10 +33,10 @@ app.get('/', function(req, res) {
 app.post('/', function(req, res) {
     var newGame = {};
     newGame.game_key = rand.generateKey();
-    newGame.puzzle = dictionary[0]; // Random word here later
+    newGame.puzzle = dictionary[Math.floor(Math.random() * dictionary.length)]; // Random word here later
     newGame.num_tries_left = 5;
     newGame.state = 'alive';
-    newGame.guessedLetters = [' ']; // Include spaces so mask function will ignore
+    newGame.guessedLetters = []; // Include spaces so mask function will ignore
 
     gameDatabase[newGame.game_key] = newGame;
 
@@ -70,17 +78,15 @@ app.post('/:id', function(req, res) {
         num_tries_left: currentGame.num_tries_left
     };
 
-    // Add logic for result of guesses, victory, loss, etc...
+    // Check for loss or win conditions
     if (currentGame.num_tries_left < 0) {
         response.state = 'lost';
-    } else if (currentGame.puzzle === response.phrase) {
+    } else if (currentGame.puzzle === response.phrase) { 
         response.state = 'won';
     }
     
-
     res.setHeader('Content-Type', 'text/plain');
     res.end(JSON.stringify(response));
-
 });
 
 // Function that checks a letter against the puzzle.
@@ -103,30 +109,43 @@ function printDatabase() {
 }
 
 // Function takes a phrase, and returns the phrase masked except for guessed letters
+// REGEX VERSION.
 function maskPhrase(phrase, guessedLetters) {
-    // Split string into array of characters
-    phrase = phrase.split('');
-
-    var maskedArray = phrase.map(function(currLetter) {
-        if (hasMatch(currLetter, guessedLetters)) { // If char matches a guessed letter
-            return currLetter;
-        } else { // Else return an underscore to mask
-            return '_';
-        }
-    });
-
-    return maskedArray.join('');
+    var specialCharacters = " &-?!.'";
+    // [^guessedLetters ] - Regex that needs to be generated + space
+    // [^abc &-?!.']
+    var regex = new RegExp('[^' + guessedLetters.join('') + specialCharacters + ']', 'g');
+    return phrase.replace(regex, '_');
 }
 
-// Helper function used to detect whether a letter exists in an array of letters
-function hasMatch(letter, guessedLetters) {
-    for (var i = 0; i < guessedLetters.length; i++) {
-        if (guessedLetters[i] === letter) {
-            return true;
-        }
-    }
-    return false;
-}
+// Function takes a phrase, and returns the phrase masked except for guessed letters
+// MAP VERSION
+// function maskPhrase(phrase, guessedLetters) {
+//     // Split string into array of characters
+//     phrase = phrase.split('');
+
+//     var maskedArray = phrase.map(function(currLetter) {
+//         if (currLetter === ' ') {
+//             return ' ';
+//         } else if (hasMatch(currLetter, guessedLetters)) { // If char matches a guessed letter
+//             return currLetter;
+//         } else { // Else return an underscore to mask
+//             return '_';
+//         }
+//     });
+
+//     return maskedArray.join('');
+// }
+
+// // Helper function used to detect whether a letter exists in an array of letters
+// function hasMatch(letter, guessedLetters) {
+//     for (var i = 0; i < guessedLetters.length; i++) {
+//         if (guessedLetters[i] === letter) {
+//             return true;
+//         }
+//     }
+//     return false;
+// }
 
 // Start the server
 app.listen(process.env.PORT || listenPort);
