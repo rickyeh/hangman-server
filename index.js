@@ -23,16 +23,33 @@ fs.readFile('dictionary.txt', 'utf8', function(err, data) {
 // BodyParser
 app.use(bodyParser.json());
 
-// app.get('/', function(req, res) {
-//     res.send('get message received');
-//     console.log('get received');
-// });
+app.get('/', function(req, res) {
+    var emailObj = JSON.parse(req.query.data);
 
-app.get('/:data:callback', function(req, res) {
-    console.log(req.params.data);
-    console.log(req.params.callback);
-    // res.send('get message received');
-    console.log('get received');
+    var newGame = {};
+    newGame.game_key = rand.generateKey();
+    newGame.puzzle = dictionary[Math.floor(Math.random() * dictionary.length)]; // Random word here later
+    newGame.num_tries_left = 5;
+    newGame.state = 'alive';
+    newGame.guessedLetters = []; // Include spaces so mask function will ignore
+
+    gameDatabase[newGame.game_key] = newGame;
+
+    console.log();
+    console.log('New Game requested received with email: ' + emailObj.email );
+    console.log('Key generated : ' + newGame.game_key);
+    console.log('Game Database is currently:');
+    printDatabase();
+
+    var response = {
+        game_key: newGame.game_key,
+        phrase: maskPhrase(newGame.puzzle, newGame.guessedLetters),
+        state: 'alive',
+        num_tries_left: num_lives
+    };
+
+    res.setHeader('Content-Type', 'text/plain');
+    res.jsonp(response);
 });
 
 // Post received to root
