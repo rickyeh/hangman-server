@@ -24,9 +24,15 @@ fs.readFile('dictionary.txt', 'utf8', function(err, data) {
 app.use(bodyParser.json());
 
 app.get('/', function(req, res) {
+    res.send(req.query);
     res.send('get message received');
     console.log('get received');
 });
+
+// app.get('/:data:callback', function(req, res) {
+//     res.send('get message received');
+//     console.log('get received');
+// });
 
 // Post received to root
 // New Game Generation
