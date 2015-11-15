@@ -7,7 +7,6 @@ var rand = require('generate-key');
 const listenPort = 12345;
 const num_lives = 5;
 
-
 // Object to hold ongoing games
 var gameDatabase = {};
 
@@ -17,8 +16,6 @@ var dictionary = [];
 fs.readFile('dictionary.txt', 'utf8', function(err, data) {
     dictionary = data.split('\n');
 });
-
-// dictionary = ["what's up"];
 
 // BodyParser
 app.use(bodyParser.json());
@@ -48,6 +45,38 @@ app.get('/', function(req, res) {
         num_tries_left: num_lives
     };
 
+    res.setHeader('Content-Type', 'text/plain');
+    res.jsonp(response);
+});
+
+app.get('/:id', function(req, res) {
+    var guess = JSON.parse(req.query.data).guess;
+
+    console.log(req.params.id);
+    console.log();
+    console.log('Letter Guessed: ' + guess);
+
+    // Looks up the game based on the key provided by the id parameter in URL
+    var currentGame = gameDatabase[req.params.id];
+
+    // Guesses the letter
+    currentGame = guessLetter(guess.toLowerCase(), currentGame);
+
+    // Build response obj
+    var response = {
+        game_key: currentGame.game_key,
+        phrase: maskPhrase(currentGame.puzzle, currentGame.guessedLetters),
+        state: currentGame.state,
+        num_tries_left: currentGame.num_tries_left
+    };
+
+    // Check for loss or win conditions
+    if (currentGame.num_tries_left < 0) {
+        response.state = 'lost';
+    } else if (currentGame.puzzle === response.phrase) { 
+        response.state = 'won';
+    }
+    
     res.setHeader('Content-Type', 'text/plain');
     res.jsonp(response);
 });
