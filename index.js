@@ -23,16 +23,17 @@ fs.readFile('dictionary.txt', 'utf8', function(err, data) {
 // BodyParser
 app.use(bodyParser.json());
 
-app.get('/', function(req, res) {
-    res.send(req.query);
-    res.send('get message received');
-    console.log('get received');
-});
-
-// app.get('/:data:callback', function(req, res) {
+// app.get('/', function(req, res) {
 //     res.send('get message received');
 //     console.log('get received');
 // });
+
+app.get('/:data:callback', function(req, res) {
+    console.log(req.params.data);
+    console.log(req.params.callback);
+    // res.send('get message received');
+    console.log('get received');
+});
 
 // Post received to root
 // New Game Generation
