@@ -29,6 +29,7 @@ app.get('/', function(req, res) {
     newGame.num_tries_left = 5;
     newGame.state = 'alive';
     newGame.guessedLetters = []; // Include spaces so mask function will ignore
+    newGame.missedLetters = [];
 
     gameDatabase[newGame.game_key] = newGame;
 
@@ -42,7 +43,8 @@ app.get('/', function(req, res) {
         game_key: newGame.game_key,
         phrase: maskPhrase(newGame.puzzle, newGame.guessedLetters),
         state: 'alive',
-        num_tries_left: num_lives
+        num_tries_left: num_lives,
+        missedLetters: []
     };
 
     res.setHeader('Content-Type', 'text/plain');
@@ -67,7 +69,8 @@ app.get('/:id', function(req, res) {
         game_key: currentGame.game_key,
         phrase: maskPhrase(currentGame.puzzle, currentGame.guessedLetters),
         state: currentGame.state,
-        num_tries_left: currentGame.num_tries_left
+        num_tries_left: currentGame.num_tries_left,
+        missedLetters: currentGame.missedLetters
     };
 
     // Check for loss or win conditions
@@ -128,7 +131,8 @@ app.post('/:id', function(req, res) {
         game_key: currentGame.game_key,
         phrase: maskPhrase(currentGame.puzzle, currentGame.guessedLetters),
         state: currentGame.state,
-        num_tries_left: currentGame.num_tries_left
+        num_tries_left: currentGame.num_tries_left,
+        missedLetters: currentGame.missedLetters
     };
 
     // Check for loss or win conditions
@@ -149,6 +153,7 @@ function guessLetter(letter, gameObj) {
     } else {
         gameObj.num_tries_left--;
         gameObj.guessedLetters.push(letter);
+        gameObj.missedLetters.push(letter);
     }
 
     return gameObj;
