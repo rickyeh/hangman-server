@@ -76,6 +76,7 @@ app.get('/:id', function(req, res) {
     // Check for loss or win conditions
     if (currentGame.num_tries_left < 0) {
         response.state = 'lost';
+        response.puzzle = currentGame.puzzle;
     } else if (currentGame.puzzle === response.phrase) { 
         response.state = 'won';
     }
